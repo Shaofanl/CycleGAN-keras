@@ -5,7 +5,7 @@ from keras.models import Model
 
 from ...utils.backend_utils import get_filter_dim
 
-def basic_D(input_shape, ndf, n_layers=3, kw=4, dropout=0.0, use_sigmoid=False):
+def basic_D(input_shape, ndf, n_layers=3, kw=4, dropout=0.0, use_sigmoid=False, **kwargs):
     padw = (kw-1)/2
     
     input = Input(input_shape)
@@ -26,7 +26,7 @@ def basic_D(input_shape, ndf, n_layers=3, kw=4, dropout=0.0, use_sigmoid=False):
     if use_sigmoid:
         x = Activation('sigmoid')(x)
 
-    model = Model(input, x)
+    model = Model(input, x, name=kwargs.get('name',None))
     print('Model basic D:')
     model.summary()
 

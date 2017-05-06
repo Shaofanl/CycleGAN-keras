@@ -7,15 +7,31 @@ from keras.layers import Input
 from keras.optimizers import Adam
 from keras.models import Model
 import numpy as np
+from ..utils.vis_utils import vis_grid
 
 class CycleGAN(BaseModel):
     name = 'CycleGAN'
-    def __init__(self, opt):
-        gen_B = defineG(opt.which_model_netG, input_shape=opt.shapeA, output_shape=opt.shapeB, ngf=opt.ngf)
-        dis_B = defineD(opt.which_model_netD, input_shape=opt.shapeB, ndf=opt.ndf, use_sigmoid=not opt.use_lsgan)
+    @staticmethod
+    def init_network(model):
+        for w in model.weights:
+            if w.name.startswith('conv2d') and w.name.endswith('kernel'):
+                value = np.random.normal(loc=0.0, scale=0.04, size=w.get_value().shape)
+                w.set_value(value.astype('float32'))
+            if w.name.startswith('conv2d') and w.name.endswith('bias'):
+                value = np.zeros(w.get_value().shape)
+                w.set_value(value.astype('float32'))
 
-        gen_A = defineG(opt.which_model_netG, input_shape=opt.shapeB, output_shape=opt.shapeA, ngf=opt.ngf)
-        dis_A = defineD(opt.which_model_netD, input_shape=opt.shapeA, ndf=opt.ndf, use_sigmoid=not opt.use_lsgan)
+    def __init__(self, opt):
+        gen_B = defineG(opt.which_model_netG, input_shape=opt.shapeA, output_shape=opt.shapeB, ngf=opt.ngf, name='gen_B')
+        dis_B = defineD(opt.which_model_netD, input_shape=opt.shapeB, ndf=opt.ndf, use_sigmoid=not opt.use_lsgan, name='dis_B')
+
+        gen_A = defineG(opt.which_model_netG, input_shape=opt.shapeB, output_shape=opt.shapeA, ngf=opt.ngf, name='gen_A')
+        dis_A = defineD(opt.which_model_netD, input_shape=opt.shapeA, ndf=opt.ndf, use_sigmoid=not opt.use_lsgan, name='dis_A')
+
+        self.init_network(gen_B)
+        self.init_network(dis_B)
+        self.init_network(gen_A)
+        self.init_network(dis_A)
 
 
         # build for generators
@@ -60,6 +76,8 @@ class CycleGAN(BaseModel):
         self.D_trainner = D_trainner
         self.AtoB = gen_B
         self.BtoA = gen_A
+        self.DisA = dis_A
+        self.DisB = dis_B
         self.opt = opt
 
     def fit(self, img_A_generator, img_B_generator):
@@ -71,13 +89,14 @@ class CycleGAN(BaseModel):
 
         iteration = 0
         while iteration < opt.niter:
+            print 'iteration: {}'.format(iteration)
             # sample
             real_A = img_A_generator(bs)
             real_B = img_B_generator(bs)
 
             # fake pool
-            fake_A_pool.append(self.BtoA.predict(real_B))
-            fake_B_pool.append(self.AtoB.predict(real_A))
+            fake_A_pool.extend(self.BtoA.predict(real_B))
+            fake_B_pool.extend(self.AtoB.predict(real_A))
             fake_A_pool = fake_A_pool[:opt.pool_size] 
             fake_B_pool = fake_B_pool[:opt.pool_size]
 
@@ -86,8 +105,8 @@ class CycleGAN(BaseModel):
             fake_A = np.array(fake_A)
             fake_B = np.array(fake_B)
 
-            ones  = np.ones((bs,))
-            zeros = np.zeros((bs,))
+            ones  = np.ones((bs,)+self.G_trainner.output_shape[0][1:])
+            zeros = np.zeros((bs, )+self.G_trainner.output_shape[0][1:])
 
             # train
             _, G_loss_fake_B, G_loss_fake_A, G_loss_rec_A, G_loss_rec_B = \
@@ -96,14 +115,17 @@ class CycleGAN(BaseModel):
 
             _, D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B = \
                 self.D_trainner.train_on_batch([real_A, fake_A, real_B, fake_B],
-                    [zeros, ones*0.9, zeros, ones])
+                    [zeros, ones*0.9, zeros, ones*0.9])
 
             print('Generator Loss:')
-            print('fake_A: {:.3f} rec_A: {:.3f} | fake_B: {:.3f} rec_B: {:.3f}'.\
+            print('fake_A: {} rec_A: {} | fake_B: {} rec_B: {}'.\
                     format(G_loss_fake_A, G_loss_rec_A, G_loss_fake_B, G_loss_rec_B))
             print('Discriminator Loss:')
-            print('real_A: {:.3f} fake_A: {:.3f} | real_B: {:.3f} fake_B: {:.3f}'.\
+            print('real_A: {} fake_A: {} | real_B: {} fake_B: {}'.\
                     format(D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B))
-        
-        
- 
+
+            if iteration % opt.save_iter == 0:
+                vis_grid(np.array([real_A[0], fake_A[0], real_B[0], fake_B[0]]), 
+                        (1, 4), 'quickshots/{}.jpg'.format(iteration) )
+            iteration += 1
+

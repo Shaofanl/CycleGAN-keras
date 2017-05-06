@@ -28,7 +28,7 @@ def res_block(input, filters, kernel_size=(3,3), strides=(1,1), padding='same'):
     merged = Concatenate(axis=get_filter_dim())([input, x])
     return merged
 
-def resnet_6blocks(input_shape, output_nc, ngf):
+def resnet_6blocks(input_shape, output_nc, ngf, **kwargs):
     ks = 3
     f = 7
     p = (f-1)/2
@@ -64,7 +64,7 @@ def resnet_6blocks(input_shape, output_nc, ngf):
     x = Conv2D(output_nc, (f,f), padding='same')(x)
     x = Activation('tanh')(x)
     
-    model = Model(input, x)
+    model = Model(input, x, name=kwargs.get('name',None))
     print('Model resnet 6blocks:')
     model.summary()
     return model

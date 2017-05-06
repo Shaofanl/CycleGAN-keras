@@ -13,19 +13,25 @@ class ImageGenerator(object):
         print('ImageGenerator from {} [{}]'.format(root, len(self.img_list)))
 
     def __call__(self, bs):
-        imgs = []
-        for _ in range(bs):
-            img = imread(os.path.join(self.root, np.random.choice(self.img_list)))
+        while True:
+            try:
+                imgs = []
+                for _ in range(bs):
+                    img = imread(os.path.join(self.root, np.random.choice(self.img_list)))
 
-            if self.resize: img = imresize(img, self.resize)
-            if self.crop: 
-                left = np.random.randint(0, img.shape[0]-self.crop[0])
-                top  = np.random.randint(0, img.shape[1]-self.crop[1])
-                img = img[left:left+self.crop[0], top:top+self.crop[1]] 
-            imgs.append(img)
+                    if self.resize: img = imresize(img, self.resize)
+                    if self.crop: 
+                        left = np.random.randint(0, img.shape[0]-self.crop[0])
+                        top  = np.random.randint(0, img.shape[1]-self.crop[1])
+                        img = img[left:left+self.crop[0], top:top+self.crop[1]] 
+                    imgs.append(img)
 
-        imgs = np.array(imgs)
-        if get_filter_dim() == 1:
-            imgs = imgs.transpose(0, 3, 1, 2)
-        return imgs
+                imgs = np.array(imgs)
+                if get_filter_dim() == 1:
+                    imgs = imgs.transpose(0, 3, 1, 2)
 
+                imgs = imgs/127.5-1
+
+                return imgs
+            except:
+                pass

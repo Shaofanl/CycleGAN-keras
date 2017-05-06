@@ -1,5 +1,7 @@
 *.pyc
 *.swp
+*.log
 
 datasets/
 !datasets/download_dataset.sh
+quickshots/
