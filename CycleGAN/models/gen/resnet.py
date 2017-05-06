@@ -65,7 +65,7 @@ def resnet_6blocks(input_shape, output_nc, ngf):
     x = Activation('tanh')(x)
     
     model = Model(input, x)
-    print('resnet 6blocks:')
+    print('Model resnet 6blocks:')
     model.summary()
     return model
 

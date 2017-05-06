@@ -1,2 +1,5 @@
 *.pyc
 *.swp
+
+datasets/
+!datasets/download_dataset.sh
