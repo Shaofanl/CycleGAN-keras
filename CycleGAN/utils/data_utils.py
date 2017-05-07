@@ -4,11 +4,12 @@ import numpy as np
 import os
 
 class ImageGenerator(object):
-    def __init__(self, root, resize=None, crop=None):
+    def __init__(self, root, resize=None, crop=None, flip=None):
         self.img_list = os.listdir(root)
         self.root = root
         self.resize = resize
         self.crop = crop
+        self.flip = flip
 
         print('ImageGenerator from {} [{}]'.format(root, len(self.img_list)))
 
@@ -24,6 +25,10 @@ class ImageGenerator(object):
                         left = np.random.randint(0, img.shape[0]-self.crop[0])
                         top  = np.random.randint(0, img.shape[1]-self.crop[1])
                         img = img[left:left+self.crop[0], top:top+self.crop[1]] 
+                    if self.flip:
+                        if np.random.random() > 0.5:
+                            img = img[:, ::-1, :]
+
                     imgs.append(img)
 
                 imgs = np.array(imgs)

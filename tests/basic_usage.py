@@ -13,6 +13,7 @@ from CycleGAN.utils import Option
 
 if __name__ == '__main__':
     opt = Option()
+    opt.batch_size = 10
     opt.save_iter = 50
     opt.niter = 10000
 

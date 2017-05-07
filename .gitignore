@@ -3,5 +3,6 @@
 *.log
 
 datasets/
-!datasets/download_dataset.sh
 quickshots/
+quickshots*/
+!datasets/download_dataset.sh

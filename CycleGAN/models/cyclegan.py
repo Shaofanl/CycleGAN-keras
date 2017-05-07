@@ -7,6 +7,7 @@ from keras.layers import Input
 from keras.optimizers import Adam
 from keras.models import Model
 import numpy as np
+import sys
 from ..utils.vis_utils import vis_grid
 
 class CycleGAN(BaseModel):
@@ -15,7 +16,7 @@ class CycleGAN(BaseModel):
     def init_network(model):
         for w in model.weights:
             if w.name.startswith('conv2d') and w.name.endswith('kernel'):
-                value = np.random.normal(loc=0.0, scale=0.04, size=w.get_value().shape)
+                value = np.random.normal(loc=0.0, scale=0.02, size=w.get_value().shape)
                 w.set_value(value.astype('float32'))
             if w.name.startswith('conv2d') and w.name.endswith('bias'):
                 value = np.zeros(w.get_value().shape)
@@ -125,7 +126,17 @@ class CycleGAN(BaseModel):
                     format(D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B))
 
             if iteration % opt.save_iter == 0:
-                vis_grid(np.array([real_A[0], fake_A[0], real_B[0], fake_B[0]]), 
-                        (1, 4), 'quickshots/{}.jpg'.format(iteration) )
+                imga = real_A 
+                imga2b = self.AtoB.predict(imga)
+                imga2b2a = self.BtoA.predict(imga2b)
+
+                imgb = real_B
+                imgb2a = self.BtoA.predict(imgb)
+                imgb2a2b = self.AtoB.predict(imgb2a)
+
+                vis_grid(np.concatenate([imga, imga2b, imga2b2a, imgb, imgb2a, imgb2a2b], 
+                                                                            axis=0),
+                        (6, bs), '{}/{}.jpg'.format(opt.pic_dir, iteration) )
             iteration += 1
+            sys.stdout.flush()
 

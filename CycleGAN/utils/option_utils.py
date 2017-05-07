@@ -29,6 +29,9 @@ class Option(object):
         pool_size = 50,                ## the size of image buffer that stores previously generated images
         save_iter = 50,
 
+        # dirs
+        pic_dir = 'quickshots',
+
         niter_decay = 100,      ##  # of iter to linearly decay learning rate to zero
         ntrain = np.inf,        ## #  of examples per epoch. math.huge for full dataset
         flip = 1,               ## if flip the images for data argumentation
