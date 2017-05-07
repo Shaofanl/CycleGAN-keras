@@ -1,6 +1,7 @@
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--cuda", type=str, help="cuda", default='0')
+parser.add_argument("--pic_dir", type=str, help="picture dir", default='./quickshots/')
 args = parser.parse_args()
 print args
 
@@ -14,8 +15,13 @@ from CycleGAN.utils import Option
 if __name__ == '__main__':
     opt = Option()
     opt.batch_size = 10
-    opt.save_iter = 50
-    opt.niter = 10000
+    opt.save_iter = 100
+    opt.niter = 100000
+    opt.lmbd = 5
+    opt.pic_dir = args.pic_dir
+
+    opt.__dict__.update(args.__dict__)
+
 
     cycleGAN = CycleGAN(opt)
 

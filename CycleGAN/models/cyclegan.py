@@ -1,5 +1,6 @@
 # keras version of https://github.ckom/junyanz/CycleGAN/models/cycle_gan_model.lua
 
+import os
 from .base import BaseModel
 from .gen import defineG
 from .dis import defineD
@@ -83,6 +84,8 @@ class CycleGAN(BaseModel):
 
     def fit(self, img_A_generator, img_B_generator):
         opt = self.opt
+        if not os.path.exists(opt.pic_dir):
+            os.mkdir(opt.pic_dir)
         bs = opt.batch_size
         
         fake_A_pool = []
@@ -125,6 +128,15 @@ class CycleGAN(BaseModel):
             print('real_A: {} fake_A: {} | real_B: {} fake_B: {}'.\
                     format(D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B))
 
+
+            import ipdb
+            ipdb.set_trace()
+            print("Dis_A")
+            res = self.DisA.predict(real_A)
+            print("real_A: {}".format(res.mean()))
+            res = self.DisA.predict(fake_A)
+            print("fake_A: {}".format(res.mean()))
+
             if iteration % opt.save_iter == 0:
                 imga = real_A 
                 imga2b = self.AtoB.predict(imga)
@@ -136,7 +148,7 @@ class CycleGAN(BaseModel):
 
                 vis_grid(np.concatenate([imga, imga2b, imga2b2a, imgb, imgb2a, imgb2a2b], 
                                                                             axis=0),
-                        (6, bs), '{}/{}.jpg'.format(opt.pic_dir, iteration) )
+                        (6, bs), os.path.join(opt.pic_dir, '{}.jpg'.format(iteration)) )
             iteration += 1
             sys.stdout.flush()
 
