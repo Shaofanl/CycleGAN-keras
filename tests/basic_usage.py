@@ -17,7 +17,7 @@ if __name__ == '__main__':
     opt.batch_size = 10
     opt.save_iter = 100
     opt.niter = 100000
-    opt.lmbd = 5
+    opt.lmbd = 10
     opt.pic_dir = args.pic_dir
 
     opt.__dict__.update(args.__dict__)

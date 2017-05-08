@@ -101,8 +101,8 @@ class CycleGAN(BaseModel):
             # fake pool
             fake_A_pool.extend(self.BtoA.predict(real_B))
             fake_B_pool.extend(self.AtoB.predict(real_A))
-            fake_A_pool = fake_A_pool[:opt.pool_size] 
-            fake_B_pool = fake_B_pool[:opt.pool_size]
+            fake_A_pool = fake_A_pool[-opt.pool_size:]
+            fake_B_pool = fake_B_pool[-opt.pool_size:]
 
             fake_A = [fake_A_pool[ind] for ind in np.random.choice(len(fake_A_pool), size=(bs,), replace=False)]
             fake_B = [fake_B_pool[ind] for ind in np.random.choice(len(fake_B_pool), size=(bs,), replace=False)]
@@ -111,6 +111,9 @@ class CycleGAN(BaseModel):
 
             ones  = np.ones((bs,)+self.G_trainner.output_shape[0][1:])
             zeros = np.zeros((bs, )+self.G_trainner.output_shape[0][1:])
+
+            import ipdb
+            ipdb.set_trace()
 
             # train
             _, G_loss_fake_B, G_loss_fake_A, G_loss_rec_A, G_loss_rec_B = \
@@ -129,8 +132,6 @@ class CycleGAN(BaseModel):
                     format(D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B))
 
 
-            import ipdb
-            ipdb.set_trace()
             print("Dis_A")
             res = self.DisA.predict(real_A)
             print("real_A: {}".format(res.mean()))
