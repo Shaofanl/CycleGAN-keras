@@ -5,8 +5,8 @@
 # TODO: should use http://pytorch.org/docs/_modules/torch/nn/modules/instancenorm.html
 #   rather than BatchNorm
 
-from keras.layers import Conv2D, Conv2DTranspose
-from keras.layers import Activation, Input
+from keras.layers import Conv2D, Conv2DTranspose, UpSampling2D
+from keras.layers import BatchNormalization, Activation, Input
 from keras.layers.merge import Concatenate
 from keras.models import Model
 
@@ -14,7 +14,19 @@ from ...utils.backend_utils import get_filter_dim
 from ...layers import ReflectPadding2D, InstanceNormalization2D
 
 padding = ReflectPadding2D
-normalize = InstanceNormalization2D
+
+def normalize():
+#   return BatchNormalization(axis=get_filter_dim())
+    return InstanceNormalization2D()
+
+def scaleup(input, ngf, kss, strides, padding):
+    x = Conv2DTranspose(ngf, kss, strides=strides, padding=padding)(input)
+
+    # upsample + conv
+    #x = UpSampling2D(strides)(input)
+    #x = Conv2D(ngf, kss, padding=padding)(x)
+    return x
+
 
 def res_block(input, filters, kernel_size=(3,3), strides=(1,1)):
     # conv_block:add(nn.SpatialReflectionPadding(1, 1, 1, 1))
@@ -33,7 +45,6 @@ def res_block(input, filters, kernel_size=(3,3), strides=(1,1)):
                 kernel_size=kernel_size,
                 strides=strides,)(x)
     x = normalize()(x)
-    x = Activation('relu')(x)
 
     merged = Concatenate(axis=get_filter_dim())([input, x])
     return merged
@@ -70,12 +81,14 @@ def resnet_6blocks(input_shape, output_nc, ngf, **kwargs):
     x = res_block(x, ngf*4)
 
     # local d2 = d1 - nn.SpatialFullConvolution(ngf*4, ngf*2, ks, ks, 2, 2, 1, 1,1,1) - normalization(ngf*2) - nn.ReLU(true)
-    x = Conv2DTranspose(ngf*2, (ks,ks), strides=(2,2), padding='same')(x)
+    # x = Conv2DTranspose(ngf*2, (ks,ks), strides=(2,2), padding='same')(x)
+    x = scaleup(x, ngf*2, (ks, ks), strides=(2,2), padding='same')
     x = normalize()(x)
     x = Activation('relu')(x)
     
     # local d3 = d2 - nn.SpatialFullConvolution(ngf*2, ngf, ks, ks, 2, 2, 1, 1,1,1) - normalization(ngf) - nn.ReLU(true)
-    x = Conv2DTranspose(ngf, (ks,ks), strides=(2,2), padding='same')(x)
+    # x = Conv2DTranspose(ngf, (ks,ks), strides=(2,2), padding='same')(x)
+    x = scaleup(x, ngf, (ks, ks), strides=(2,2), padding='same')
     x = normalize()(x)
     x = Activation('relu')(x)
 

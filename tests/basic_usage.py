@@ -14,13 +14,14 @@ from CycleGAN.utils import Option
 
 if __name__ == '__main__':
     opt = Option()
-    opt.batch_size = 10
+    opt.batch_size = 1
     opt.save_iter = 100
     opt.niter = 100000
     opt.lmbd = 10
     opt.pic_dir = args.pic_dir
 
     opt.__dict__.update(args.__dict__)
+    opt.summary()
 
 
     cycleGAN = CycleGAN(opt)

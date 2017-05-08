@@ -112,9 +112,6 @@ class CycleGAN(BaseModel):
             ones  = np.ones((bs,)+self.G_trainner.output_shape[0][1:])
             zeros = np.zeros((bs, )+self.G_trainner.output_shape[0][1:])
 
-            import ipdb
-            ipdb.set_trace()
-
             # train
             _, G_loss_fake_B, G_loss_fake_A, G_loss_rec_A, G_loss_rec_B = \
                 self.G_trainner.train_on_batch([real_A, real_B],
@@ -149,7 +146,7 @@ class CycleGAN(BaseModel):
 
                 vis_grid(np.concatenate([imga, imga2b, imga2b2a, imgb, imgb2a, imgb2a2b], 
                                                                             axis=0),
-                        (6, bs), os.path.join(opt.pic_dir, '{}.jpg'.format(iteration)) )
+                        (6, bs), os.path.join(opt.pic_dir, '{}.png'.format(iteration)) )
             iteration += 1
             sys.stdout.flush()
 

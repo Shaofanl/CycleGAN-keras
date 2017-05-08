@@ -1,5 +1,6 @@
 
 import numpy as np
+from pprint import pprint
 
 class Option(object):
     def __init__(self, 
@@ -62,4 +63,7 @@ class Option(object):
     ):
         assert shapeA[1:] == crop
         self.__dict__.update(locals())
+
+    def summary(self):
+        pprint(self.__dict__)
 
