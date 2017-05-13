@@ -19,6 +19,7 @@ class Option(object):
         ngf = 64,               ## #  of gen filters in first conv layer
         ndf = 64,               ## #  of discrim filters in first conv layer
         lmbd = 10.0,
+        idloss=1.0,
  
         # optimizers
         lr = 0.0002,            ## initial learning rate for adam
@@ -29,6 +30,7 @@ class Option(object):
         niter = 100,            ## #  of iter at starting learning rate
         pool_size = 50,                ## the size of image buffer that stores previously generated images
         save_iter = 50,
+        d_iter = 10,
 
         # dirs
         pic_dir = 'quickshots',

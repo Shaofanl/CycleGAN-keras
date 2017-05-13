@@ -40,20 +40,27 @@ class CycleGAN(BaseModel):
         real_A = Input(opt.shapeA)
         fake_B = gen_B(real_A)
         dis_fake_B = dis_B(fake_B)
+        rec_A = gen_A(fake_B) # = gen_A(gen_B(real_A))
 
         real_B = Input(opt.shapeB)
         fake_A = gen_A(real_B)
         dis_fake_A = dis_A(fake_A)
-
-        rec_A = gen_A(fake_B) # = gen_A(gen_B(real_A))
         rec_B = gen_B(fake_A) # = gen_B(gen_A(real_B))
 
-        G_trainner = Model([real_A, real_B], 
-                 [dis_fake_B,   dis_fake_A,     rec_A,      rec_B])
-        
-        G_trainner.compile(Adam(lr=opt.lr, beta_1=opt.beta1,),
-            loss=['MSE',        'MSE',          'MAE',      'MAE'],
-            loss_weights=[1,    1,              opt.lmbd,   opt.lmbd])
+        if opt.idloss > 0:
+            G_trainner = Model([real_A, real_B], 
+                     [dis_fake_B,   dis_fake_A,     rec_A,      rec_B,      fake_B,     fake_A])
+            
+            G_trainner.compile(Adam(lr=opt.lr, beta_1=opt.beta1,),
+                loss=['MSE',        'MSE',          'MAE',      'MAE',      'MAE',      'MAE'],
+                loss_weights=[1,    1,              opt.lmbd,   opt.lmbd,   opt.idloss  ,opt.idloss])
+        else:
+            G_trainner = Model([real_A, real_B], 
+                     [dis_fake_B,   dis_fake_A,     rec_A,      rec_B,      ])
+            
+            G_trainner.compile(Adam(lr=opt.lr, beta_1=opt.beta1,),
+                loss=['MSE',        'MSE',          'MAE',      'MAE',      ],
+                loss_weights=[1,    1,              opt.lmbd,   opt.lmbd,   ])
         # label:  0             0               real_A      real_B
 
 
@@ -112,18 +119,30 @@ class CycleGAN(BaseModel):
             ones  = np.ones((bs,)+self.G_trainner.output_shape[0][1:])
             zeros = np.zeros((bs, )+self.G_trainner.output_shape[0][1:])
 
+
             # train
-            _, G_loss_fake_B, G_loss_fake_A, G_loss_rec_A, G_loss_rec_B = \
-                self.G_trainner.train_on_batch([real_A, real_B],
-                    [zeros, zeros, real_A, real_B])
+            for _ in range(opt.d_iter):
+                _, D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B = \
+                    self.D_trainner.train_on_batch([real_A, fake_A, real_B, fake_B],
+                        [zeros, ones*0.9, zeros, ones*0.9])
 
-            _, D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B = \
-                self.D_trainner.train_on_batch([real_A, fake_A, real_B, fake_B],
-                    [zeros, ones*0.9, zeros, ones*0.9])
 
+            if opt.idloss > 0:
+                _, G_loss_fake_B, G_loss_fake_A, G_loss_rec_A, G_loss_rec_B, G_loss_id_A, G_loss_id_B = \
+                    self.G_trainner.train_on_batch([real_A, real_B],
+                        [zeros, zeros, real_A, real_B, real_A, real_B])
+            else:
+                _, G_loss_fake_B, G_loss_fake_A, G_loss_rec_A, G_loss_rec_B = \
+                    self.G_trainner.train_on_batch([real_A, real_B],
+                        [zeros, zeros, real_A, real_B, ])
+
+            
             print('Generator Loss:')
-            print('fake_A: {} rec_A: {} | fake_B: {} rec_B: {}'.\
-                    format(G_loss_fake_A, G_loss_rec_A, G_loss_fake_B, G_loss_rec_B))
+            print('fake_B: {} rec_A: {} | fake_A: {} rec_B: {}'.\
+                    format(G_loss_fake_B, G_loss_rec_A, G_loss_fake_A, G_loss_rec_B))
+            if opt.idloss > 0:
+                print('id_loss_A: {}, id_loss_B: {}'.format(G_loss_id_A, G_loss_id_B))
+
             print('Discriminator Loss:')
             print('real_A: {} fake_A: {} | real_B: {} fake_B: {}'.\
                     format(D_loss_real_A, D_loss_fake_A, D_loss_real_B, D_loss_fake_B))
@@ -147,6 +166,12 @@ class CycleGAN(BaseModel):
                 vis_grid(np.concatenate([imga, imga2b, imga2b2a, imgb, imgb2a, imgb2a2b], 
                                                                             axis=0),
                         (6, bs), os.path.join(opt.pic_dir, '{}.png'.format(iteration)) )
+
+                self.AtoB.save(os.path.join(opt.pic_dir, 'a2b.h5'))
+                self.BtoA.save(os.path.join(opt.pic_dir, 'b2a.h5'))
+
+#               import ipdb
+#               ipdb.set_trace()
             iteration += 1
             sys.stdout.flush()
 

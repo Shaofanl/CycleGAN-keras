@@ -7,7 +7,7 @@
 
 from keras.layers import Conv2D, Conv2DTranspose, UpSampling2D
 from keras.layers import BatchNormalization, Activation, Input
-from keras.layers.merge import Concatenate
+from keras.layers.merge import Add, Concatenate
 from keras.models import Model
 
 from ...utils.backend_utils import get_filter_dim
@@ -23,8 +23,8 @@ def scaleup(input, ngf, kss, strides, padding):
     x = Conv2DTranspose(ngf, kss, strides=strides, padding=padding)(input)
 
     # upsample + conv
-    #x = UpSampling2D(strides)(input)
-    #x = Conv2D(ngf, kss, padding=padding)(x)
+#   x = UpSampling2D(strides)(input)
+#   x = Conv2D(ngf, kss, padding=padding)(x)
     return x
 
 
@@ -46,7 +46,8 @@ def res_block(input, filters, kernel_size=(3,3), strides=(1,1)):
                 strides=strides,)(x)
     x = normalize()(x)
 
-    merged = Concatenate(axis=get_filter_dim())([input, x])
+#   merged = Concatenate(axis=get_filter_dim())([input, x])
+    merged = Add()([input, x])
     return merged
 
 def resnet_6blocks(input_shape, output_nc, ngf, **kwargs):
