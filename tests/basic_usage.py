@@ -5,13 +5,14 @@
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument("--cuda", type=str, help="cuda", default='0')
-parser.add_argument("--pic_dir", type=str, help="picture dir", default='./quickshots/')
+parser.add_argument("--cuda", type=str, help="cuda", default='2')
+parser.add_argument("--pic_dir", type=str, help="picture dir", default='./quickshots/quickshots18')
 args = parser.parse_args()
 print args
 
 import os
-os.environ['THEANO_FLAGS']=os.environ.get('THEANO_FLAGS','')+',gpuarray.preallocate=0.00,device=cuda{}'.format(args.cuda)
+os.environ['THEANO_FLAGS']=os.environ.get('THEANO_FLAGS','')+',gpuarray.preallocate=0.45,device=cuda{}'.format(args.cuda)
+os.environ['CUDA_VISIBLE_DEVICES']='{}'.format(args.cuda) 
 
 from CycleGAN.utils.data_utils import ImageGenerator
 from CycleGAN.models import CycleGAN
@@ -20,12 +21,13 @@ from CycleGAN.utils import Option
 if __name__ == '__main__':
     opt = Option()
     opt.batch_size = 1
-    opt.save_iter = 200
+    opt.save_iter = 250
     opt.niter = 100000
-    opt.lmbd = 5 
+    opt.lmbd = 10
     opt.pic_dir = args.pic_dir
     opt.idloss = 0.0
-    opt.lr = 0.0002
+    opt.lr = 0.0001
+    opt.d_iter = 1
 
     opt.__dict__.update(args.__dict__)
     opt.summary()

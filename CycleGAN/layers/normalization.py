@@ -12,16 +12,23 @@ class InstanceNormalization2D(Layer):
         super(InstanceNormalization2D, self).build(input_shape)
 
     def call(self, x, mask=None):
-        if K.backend() == 'theano':
-            T = K.theano.tensor
-            hw = T.cast(x.shape[2] * x.shape[3], K.theano.config.floatX)
-            mu = x.sum(axis=-1).sum(axis=-1) / hw
-            mu_vec = mu.dimshuffle(0, 1, "x", "x")
-            sig2 = T.square(x - mu_vec).sum(axis=-1).sum(axis=-1) / hw
-            y = (x - mu_vec) / T.sqrt(sig2.dimshuffle(0, 1, "x", "x") + K.epsilon())
-            return self.scale.dimshuffle("x", 0, "x", "x") * y + self.shift.dimshuffle("x", 0, "x", "x")
-        else:
-            raise NotImplemented("Please complete `CycGAN/layers/padding.py` to run on backend {}.".format(K.backend()))
+        def image_expand(tensor):
+            return K.expand_dims(K.expand_dims(tensor, -1), -1)
+
+        def batch_image_expand(tensor):
+            return image_expand(K.expand_dims(tensor, 0))
+
+        hw = K.cast(x.shape[2] * x.shape[3], K.floatx())
+        mu = K.sum(x, [-1, -2]) / hw
+        mu_vec = image_expand(mu) 
+        sig2 = K.sum(K.square(x - mu_vec), [-1, -2]) / hw
+        y = (x - mu_vec) / (K.sqrt(image_expand(sig2)) + K.epsilon())
+
+        scale = batch_image_expand(self.scale)
+        shift = batch_image_expand(self.shift)
+        return scale*y + shift 
+#       else:
+#           raise NotImplemented("Please complete `CycGAN/layers/padding.py` to run on backend {}.".format(K.backend()))
 
     def compute_output_shape(self, input_shape):
         return input_shape 

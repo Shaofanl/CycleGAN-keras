@@ -6,25 +6,25 @@
 #   rather than BatchNorm
 
 from keras.layers import Conv2D, Conv2DTranspose, UpSampling2D
-from keras.layers import BatchNormalization, Activation, Input
+from keras.layers import BatchNormalization, Activation, Input, ZeroPadding2D
 from keras.layers.merge import Add, Concatenate
 from keras.models import Model
 
 from ...utils.backend_utils import get_filter_dim
 from ...layers import ReflectPadding2D, InstanceNormalization2D
 
-padding = ReflectPadding2D
+padding = ZeroPadding2D # ReflectPadding2D
 
 def normalize():
 #   return BatchNormalization(axis=get_filter_dim())
     return InstanceNormalization2D()
 
 def scaleup(input, ngf, kss, strides, padding):
-    x = Conv2DTranspose(ngf, kss, strides=strides, padding=padding)(input)
+#   x = Conv2DTranspose(ngf, kss, strides=strides, padding=padding)(input)
 
     # upsample + conv
-#   x = UpSampling2D(strides)(input)
-#   x = Conv2D(ngf, kss, padding=padding)(x)
+    x = UpSampling2D(strides)(input)
+    x = Conv2D(ngf, kss, padding=padding)(x)
     return x
 
 
